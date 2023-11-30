@@ -17,15 +17,21 @@ def try_move_number(x, y):
 
         # Convert to position in flat array
         index_to_check = ((check_y - 1) * 4) + check_x - 1
-
-        # print("Index to Check: ", index_to_check)
-
         if cells[index_to_check].ButtonText == "":
-            # print("Found you!")
             current_index = ((y - 1) * 4) + x - 1
             cells[index_to_check].ButtonText = cells[current_index].ButtonText
             cells[current_index].ButtonText = ""
             break
+
+
+def is_winning_board():
+    valid_number = 1
+    for cell in cells:
+        if not str(valid_number) == cell.ButtonText:
+            return False
+        if valid_number == 15:
+            return True
+        valid_number += 1
 
 
 def update_board():
@@ -53,16 +59,19 @@ window = Sg.Window("15 Puzzle", layout=[[label],
 cells[15].ButtonText = ""
 
 # mix the grid using 15 puzzle rules so the board is solvable.
-#for _ in range(5000):
-#    try_move_number(x=randint(1, 4), y=randint(1, 4))
+for _ in range(10):
+    try_move_number(x=randint(1, 4), y=randint(1, 4))
 
 
 while True:
     selection = window.read()
-    print(selection)
     try_move_number(y=selection[0][0] + 1, x=selection[0][1] + 1)
     update_board()
     window.refresh()
+    if is_winning_board():
+        print("You won!")
+    else:
+        print("Keep trying!")
 
 
 window.close()
