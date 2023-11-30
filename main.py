@@ -37,6 +37,8 @@ def start_new_game(current_record):
                 cells[current_index].ButtonText = ""
                 is_processing_click = False
                 return 1
+        is_processing_click = False
+        return 0
 
     def is_winning_board():
         valid_number = 1
