@@ -1,16 +1,20 @@
 import PySimpleGUI as Sg
 from random import randint
+import time
 
 
 def simple_alert_box(text):
     Sg.Popup(text, title="", keep_on_top=True, button_type=Sg.POPUP_BUTTONS_OK)
 
 
-def start_new_game(current_high_score):
+def start_new_game(current_record):
     game_turns = 0
 
     def try_move_number(x, y):
         """Swaps valid tiles and returns a 1"""
+        current_index = ((y - 1) * 4) + x - 1
+        if cells[current_index].ButtonText == "":
+            return 0
         # Check all four directions.
         directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
         for direction in directions:
@@ -26,7 +30,6 @@ def start_new_game(current_high_score):
             # Convert to position in flat array
             index_to_check = ((check_y - 1) * 4) + check_x - 1
             if cells[index_to_check].ButtonText == "":
-                current_index = ((y - 1) * 4) + x - 1
                 cells[index_to_check].ButtonText = cells[current_index].ButtonText
                 cells[current_index].ButtonText = ""
                 return 1
@@ -46,7 +49,7 @@ def start_new_game(current_high_score):
             new_text = cell.ButtonText
             window[key].update(new_text)
 
-    label = Sg.Text(f"Move Count: {game_turns} \t\tHigh Score: {current_high_score}", key="ScoreText")
+    label = Sg.Text(f"Move Count: {game_turns} \t\tCurrent Record: {current_record}", key="ScoreText")
 
     # Initialize the number grid.
     cells = []
@@ -63,27 +66,41 @@ def start_new_game(current_high_score):
     cells[15].ButtonText = ""
 
     # Mix the grid using 15 puzzle rules so the board is solvable.
-    for _ in range(10):
+    for _ in range(5000):
         try_move_number(x=randint(1, 4), y=randint(1, 4))
 
     # Game Loop
     while True:
         selection = window.read()
+        time.sleep(.2)
         try:
             game_turns += try_move_number(y=selection[0][0] + 1, x=selection[0][1] + 1)
-            window[label.Key].update(f"Move Count: {game_turns} \t\tHigh Score: {current_high_score}")
+            window[label.Key].update(f"Move Count: {game_turns} \t\tCurrent Record: {current_record}")
         except TypeError:
             exit(0)  # If closed using the x button.
         update_board()
         window.refresh()
         if is_winning_board():
-            simple_alert_box("You won!")
+            simple_alert_box(f"You won in {game_turns} moves!")
+            if game_turns < current_record:
+                simple_alert_box(f"New Lowest Record!")
             window.close()
             return game_turns  # Game ends and returns final score.
         else:
             continue
 
-high_score = 0
+
 while True:
-    turns = start_new_game(high_score)
-    print("Turns in this game: ", turns)
+    try:
+        with open("record", "r") as file:
+            current_record = int(file.readline())
+    except FileNotFoundError:
+        with open("record", "w") as file:
+            file.write("0")
+            current_record = 1000
+
+    turns = start_new_game(current_record)
+
+    if turns < current_record:
+        with open("record", "w") as file:
+            file.write(str(turns))
